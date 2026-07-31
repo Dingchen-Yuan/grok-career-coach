@@ -1,0 +1,6 @@
+@GrokCareerCoach.Api_HostAddress = http://localhost:5258
+
+GET {{GrokCareerCoach.Api_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

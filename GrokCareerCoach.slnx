@@ -1,0 +1,8 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/GrokCareerCoach.Api/GrokCareerCoach.Api.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/GrokCareerCoach.Api.Tests/GrokCareerCoach.Api.Tests.csproj" />
+  </Folder>
+</Solution>

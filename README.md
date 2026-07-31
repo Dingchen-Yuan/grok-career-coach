@@ -34,8 +34,8 @@ Users sign in, submit a job description and résumé highlights, and receive str
 - [ ] Persist users & coaching sessions in PostgreSQL
 - [ ] Grok-backed “JD × résumé” analysis endpoint
 - [ ] Redis rate limiting / short-lived response cache
-- [ ] Docker Compose for local API + Postgres + Redis
-- [ ] Swagger + automated tests (Grok mocked)
+- [x] Docker Compose for local web + API + Postgres + Redis
+- [x] OpenAPI + automated tests (Grok mocked)
 - [ ] Azure deploy with secrets in Key Vault
 
 ## Architecture (target)
@@ -50,16 +50,55 @@ React UI ──JWT──▶ ASP.NET Core API ──▶ Grok (xAI)
 
 ## Local development
 
-> Implementation is in progress. Commands below will apply once the solution is added.
+The scaffold currently uses a mock Grok client, so no API key is needed to try the
+end-to-end flow.
 
 ```bash
-# coming soon
+# Start the React UI, API, PostgreSQL, and Redis
+cp .env.example .env
 docker compose up --build
 ```
 
-## Environment variables (planned)
+Then open:
 
-See `.env.example` once the API scaffold lands. Never commit real API keys.
+- Web UI: http://localhost:5173
+- API health: http://localhost:5000/health
+- OpenAPI document: http://localhost:5000/openapi/v1.json
+
+To run the projects without Docker:
+
+```bash
+ASPNETCORE_URLS=http://localhost:5000 \
+  dotnet run --no-launch-profile --project src/GrokCareerCoach.Api
+
+cd web
+npm install
+npm run dev
+```
+
+Run the checks:
+
+```bash
+dotnet test
+
+cd web
+npm run build
+npm run lint
+```
+
+## Project structure
+
+```text
+src/GrokCareerCoach.Api/       ASP.NET Core API and Grok client abstraction
+tests/GrokCareerCoach.Api.Tests/  xUnit tests
+web/                           React + TypeScript UI
+docker-compose.yml             Local application stack
+```
+
+## Environment variables
+
+Copy `.env.example` to `.env` for local overrides. Never commit real API keys or
+production JWT secrets.
 
 ## CV / résumé blurb
 
