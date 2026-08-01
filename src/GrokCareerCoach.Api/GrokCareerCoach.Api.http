@@ -1,6 +1,39 @@
-@GrokCareerCoach.Api_HostAddress = http://localhost:5258
+@host = http://localhost:5000
+@accessToken = paste-access-token-here
+@refreshToken = paste-refresh-token-here
 
-GET {{GrokCareerCoach.Api_HostAddress}}/weatherforecast/
-Accept: application/json
+GET {{host}}/health
 
 ###
+
+POST {{host}}/api/auth/google
+Content-Type: application/json
+
+{
+  "idToken": "paste-google-id-token-here"
+}
+
+###
+
+POST {{host}}/api/auth/refresh
+Content-Type: application/json
+
+{
+  "refreshToken": "{{refreshToken}}"
+}
+
+###
+
+POST {{host}}/api/coaching/analyze
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "jobDescription": "We need an engineer who can build reliable web APIs and services.",
+  "resumeHighlights": "Built and maintained customer-facing APIs using C# and PostgreSQL."
+}
+
+###
+
+GET {{host}}/api/coaching/sessions
+Authorization: Bearer {{accessToken}}

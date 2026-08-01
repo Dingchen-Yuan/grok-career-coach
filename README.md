@@ -17,7 +17,7 @@ Users sign in, submit a job description and résumé highlights, and receive str
 | Layer | Technology |
 |--------|------------|
 | API | ASP.NET Core (C#) |
-| Auth | JWT (access + refresh) |
+| Auth | Google Identity Services + JWT (access + refresh) |
 | Data | PostgreSQL + EF Core |
 | Cache / rate limit | Redis |
 | AI | xAI Grok (server-side only) |
@@ -30,8 +30,8 @@ Users sign in, submit a job description and résumé highlights, and receive str
 ## Features (roadmap)
 
 - [x] Repository & architecture scaffold
-- [ ] User registration / login with JWT
-- [ ] Persist users & coaching sessions in PostgreSQL
+- [x] Google sign-in with JWT access and refresh tokens
+- [x] Persist users & coaching sessions in PostgreSQL
 - [ ] Grok-backed “JD × résumé” analysis endpoint
 - [ ] Redis rate limiting / short-lived response cache
 - [x] Docker Compose for local web + API + Postgres + Redis
@@ -50,8 +50,15 @@ React UI ──JWT──▶ ASP.NET Core API ──▶ Grok (xAI)
 
 ## Local development
 
-The scaffold currently uses a mock Grok client, so no API key is needed to try the
-end-to-end flow.
+The scaffold currently uses a mock Grok client, so no Grok API key is needed to
+try the end-to-end flow. Authentication uses the official Google Identity
+Services client and Google's official .NET token validator. The app then issues
+short-lived access tokens, rotates refresh tokens, and stores only refresh-token
+hashes in PostgreSQL.
+
+Before starting, create a Google OAuth 2.0 Web client and add
+`http://localhost:5173` as an authorized JavaScript origin. Copy its client ID to
+`GOOGLE_CLIENT_ID` in `.env`.
 
 ```bash
 # Start the React UI, API, PostgreSQL, and Redis
@@ -59,15 +66,23 @@ cp .env.example .env
 docker compose up --build
 ```
 
+EF Core migrations are applied automatically when the API starts in the
+Development environment.
+
 Then open:
 
 - Web UI: http://localhost:5173
 - API health: http://localhost:5000/health
 - OpenAPI document: http://localhost:5000/openapi/v1.json
 
+If ports are already occupied, set `API_PORT` and `POSTGRES_PORT` in `.env`.
+
 To run the projects without Docker:
 
 ```bash
+dotnet tool restore
+dotnet ef database update --project src/GrokCareerCoach.Api
+
 ASPNETCORE_URLS=http://localhost:5000 \
   dotnet run --no-launch-profile --project src/GrokCareerCoach.Api
 

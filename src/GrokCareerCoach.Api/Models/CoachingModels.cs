@@ -12,3 +12,10 @@ public sealed record CoachingResponse(
     IReadOnlyList<string> Gaps,
     IReadOnlyList<string> InterviewQuestions,
     IReadOnlyList<string> ImprovementSuggestions);
+
+public sealed record CoachingSessionResponse(
+    Guid Id,
+    string JobDescription,
+    string ResumeHighlights,
+    CoachingResponse Result,
+    DateTimeOffset CreatedAt);
