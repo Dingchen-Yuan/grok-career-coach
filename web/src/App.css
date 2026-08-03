@@ -228,6 +228,52 @@ button:disabled {
   margin-top: 8px;
 }
 
+.history {
+  margin-top: 48px;
+  border-top: 1px solid #d9d7cc;
+  padding-top: 36px;
+}
+
+.history h2 {
+  margin: 12px 0 24px;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: clamp(1.6rem, 3vw, 2.2rem);
+  font-weight: 500;
+}
+
+.history ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 12px;
+}
+
+.history button {
+  width: 100%;
+  align-self: stretch;
+  display: grid;
+  gap: 6px;
+  border: 1px solid #c9c8bc;
+  border-radius: 2px;
+  padding: 16px 18px;
+  background: #fffdf8;
+  color: #17211b;
+  text-align: left;
+  cursor: pointer;
+}
+
+.history button strong {
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.history button span {
+  color: #5d665f;
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
 @media (max-width: 780px) {
   main {
     width: min(100% - 24px, 620px);

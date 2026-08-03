@@ -3,9 +3,10 @@ import type { FormEvent } from 'react'
 import {
   analyzeCareerFit,
   authenticateWithGoogle,
+  listCoachingSessions,
   signOut,
 } from './api/client'
-import type { CoachingResponse, User } from './api/client'
+import type { CoachingResponse, CoachingSession, User } from './api/client'
 import './App.css'
 
 function App() {
@@ -15,8 +16,13 @@ function App() {
   const [jobDescription, setJobDescription] = useState('')
   const [resumeHighlights, setResumeHighlights] = useState('')
   const [result, setResult] = useState<CoachingResponse | null>(null)
+  const [sessions, setSessions] = useState<CoachingSession[]>([])
   const [error, setError] = useState('')
   const [isLoading, setIsLoading] = useState(false)
+
+  async function loadSessions() {
+    setSessions(await listCoachingSessions())
+  }
 
   async function handleGoogleCredential(idToken: string) {
     setAuthError('')
@@ -24,6 +30,7 @@ function App() {
 
     try {
       setUser(await authenticateWithGoogle(idToken))
+      await loadSessions()
     } catch (requestError) {
       setAuthError(
         requestError instanceof Error
@@ -39,6 +46,7 @@ function App() {
     signOut()
     setUser(null)
     setResult(null)
+    setSessions([])
   }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -48,6 +56,7 @@ function App() {
 
     try {
       setResult(await analyzeCareerFit({ jobDescription, resumeHighlights }))
+      await loadSessions()
     } catch (requestError) {
       setError(
         requestError instanceof Error
@@ -153,6 +162,28 @@ function App() {
               </div>
             )}
           </article>
+        </section>
+      )}
+
+      {user && sessions.length > 0 && (
+        <section className="history">
+          <span className="eyebrow">Saved sessions</span>
+          <h2>Your recent coaching history</h2>
+          <ul>
+            {sessions.map((session) => (
+              <li key={session.id}>
+                <button
+                  onClick={() => setResult(session.result)}
+                  type="button"
+                >
+                  <strong>{session.result.fitSummary}</strong>
+                  <span>
+                    {new Date(session.createdAt).toLocaleString()}
+                  </span>
+                </button>
+              </li>
+            ))}
+          </ul>
         </section>
       )}
     </main>

@@ -29,6 +29,14 @@ export interface CoachingResponse {
   improvementSuggestions: string[]
 }
 
+export interface CoachingSession {
+  id: string
+  jobDescription: string
+  resumeHighlights: string
+  result: CoachingResponse
+  createdAt: string
+}
+
 export async function authenticateWithGoogle(idToken: string): Promise<User> {
   const response = await fetch(`${apiBaseUrl}/api/auth/google`, {
     method: 'POST',
@@ -73,6 +81,22 @@ export async function analyzeCareerFit(
   }
 
   return response.json() as Promise<CoachingResponse>
+}
+
+export async function listCoachingSessions(): Promise<CoachingSession[]> {
+  const response = await authorizedFetch('/api/coaching/sessions', {
+    method: 'GET',
+  })
+
+  if (!response.ok) {
+    throw new Error(
+      response.status === 401
+        ? 'Your session expired. Sign in again.'
+        : 'Unable to load coaching history.',
+    )
+  }
+
+  return response.json() as Promise<CoachingSession[]>
 }
 
 async function authorizedFetch(path: string, init: RequestInit) {
