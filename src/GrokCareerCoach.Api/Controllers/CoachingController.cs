@@ -1,4 +1,7 @@
+using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
+using System.Security.Cryptography;
+using System.Text;
 using System.Text.Json;
 using GrokCareerCoach.Api.Data;
 using GrokCareerCoach.Api.Data.Entities;
@@ -7,6 +10,7 @@ using GrokCareerCoach.Api.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Distributed;
 
 namespace GrokCareerCoach.Api.Controllers;
 
@@ -15,10 +19,16 @@ namespace GrokCareerCoach.Api.Controllers;
 [Route("api/[controller]")]
 public sealed class CoachingController(
     IGrokClient grokClient,
-    AppDbContext dbContext) : ControllerBase
+    AppDbContext dbContext,
+    IDistributedCache cache) : ControllerBase
 {
     private static readonly JsonSerializerOptions JsonOptions =
         JsonSerializerOptions.Web;
+
+    private static readonly DistributedCacheEntryOptions CacheOptions = new()
+    {
+        AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(15)
+    };
 
     [HttpPost("analyze")]
     [ProducesResponseType<CoachingResponse>(StatusCodes.Status200OK)]
@@ -33,7 +43,25 @@ public sealed class CoachingController(
             return Unauthorized();
         }
 
-        var response = await grokClient.AnalyzeAsync(request, cancellationToken);
+        var cacheKey = BuildCacheKey(userId, request);
+        var cached = await cache.GetStringAsync(cacheKey, cancellationToken);
+        CoachingResponse response;
+        if (cached is not null)
+        {
+            response = JsonSerializer.Deserialize<CoachingResponse>(
+                cached,
+                JsonOptions)!;
+        }
+        else
+        {
+            response = await grokClient.AnalyzeAsync(request, cancellationToken);
+            await cache.SetStringAsync(
+                cacheKey,
+                JsonSerializer.Serialize(response, JsonOptions),
+                CacheOptions,
+                cancellationToken);
+        }
+
         dbContext.CoachingSessions.Add(new CoachingSession
         {
             UserId = userId,
@@ -76,8 +104,21 @@ public sealed class CoachingController(
         return Ok(response);
     }
 
-    private bool TryGetUserId(out Guid userId) =>
-        Guid.TryParse(
-            User.FindFirstValue(ClaimTypes.NameIdentifier),
-            out userId);
+    private bool TryGetUserId(out Guid userId)
+    {
+        var raw =
+            User.FindFirstValue("sub")
+            ?? User.FindFirstValue(JwtRegisteredClaimNames.Sub)
+            ?? User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+        return Guid.TryParse(raw, out userId);
+    }
+
+    private static string BuildCacheKey(Guid userId, CoachingRequest request)
+    {
+        var payload = $"{userId}|{request.JobDescription}|{request.ResumeHighlights}";
+        var hash = Convert.ToHexStringLower(
+            SHA256.HashData(Encoding.UTF8.GetBytes(payload)));
+        return $"coaching:analyze:{hash}";
+    }
 }

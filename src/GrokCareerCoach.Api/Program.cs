@@ -11,22 +11,37 @@ var builder = WebApplication.CreateBuilder(args);
 var postgresConnection = builder.Configuration.GetConnectionString("Postgres")
     ?? throw new InvalidOperationException(
         "ConnectionStrings:Postgres is required.");
+var redisConnection = builder.Configuration.GetConnectionString("Redis")
+    ?? "localhost:6379";
 var jwtOptions = builder.Configuration
     .GetRequiredSection(JwtOptions.SectionName)
     .Get<JwtOptions>()
     ?? throw new InvalidOperationException("Jwt configuration is required.");
+var grokOptions = builder.Configuration
+    .GetSection(GrokOptions.SectionName)
+    .Get<GrokOptions>()
+    ?? new GrokOptions();
 
 builder.Services.AddControllers();
 builder.Services.AddOpenApi();
-builder.Services.AddHealthChecks();
+builder.Services.AddHealthChecks()
+    .AddNpgSql(postgresConnection, name: "postgres")
+    .AddRedis(redisConnection, name: "redis");
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(postgresConnection));
+builder.Services.AddStackExchangeRedisCache(options =>
+{
+    options.Configuration = redisConnection;
+    options.InstanceName = "grok-career-coach:";
+});
 builder.Services.AddOptions<JwtOptions>()
     .BindConfiguration(JwtOptions.SectionName)
     .ValidateDataAnnotations()
     .ValidateOnStart();
 builder.Services.AddOptions<GoogleOptions>()
     .BindConfiguration(GoogleOptions.SectionName);
+builder.Services.AddOptions<GrokOptions>()
+    .BindConfiguration(GrokOptions.SectionName);
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
@@ -41,14 +56,28 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             IssuerSigningKey = new SymmetricSecurityKey(
                 Encoding.UTF8.GetBytes(jwtOptions.Secret)),
             ValidateLifetime = true,
-            ClockSkew = TimeSpan.FromSeconds(30)
+            ClockSkew = TimeSpan.FromSeconds(30),
+            NameClaimType = "sub"
         };
     });
 builder.Services.AddAuthorization();
 builder.Services.AddScoped<IGoogleTokenValidator, GoogleTokenValidator>();
 builder.Services.AddScoped<IJwtTokenService, JwtTokenService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
-builder.Services.AddScoped<IGrokClient, MockGrokClient>();
+if (grokOptions.HasApiKey)
+{
+    builder.Services.AddHttpClient<IGrokClient, GrokClient>((_, client) =>
+    {
+        client.BaseAddress = new Uri(
+            grokOptions.BaseUrl.TrimEnd('/') + "/");
+        client.Timeout = TimeSpan.FromSeconds(60);
+    });
+}
+else
+{
+    builder.Services.AddScoped<IGrokClient, MockGrokClient>();
+}
+
 builder.Services.AddCors(options =>
 {
     options.AddDefaultPolicy(policy =>
