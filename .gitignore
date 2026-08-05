@@ -4,6 +4,7 @@ build/
 .env
 .env.*
 !.env.example
+deploy/azure/.last-deploy.env
 *.user
 bin/
 obj/

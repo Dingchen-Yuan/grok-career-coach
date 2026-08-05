@@ -1,0 +1,22 @@
+name: Deploy Azure
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  note:
+    name: Manual Azure deploy
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Deploy instructions
+        run: |
+          echo "Run the local script after az login:"
+          echo "  ./deploy/azure/deploy.sh"
+          echo "See deploy/azure/README.md for Key Vault secrets and Google origins."
+          echo "Automated push-to-ACR from CI can be added once Azure credentials are stored as GitHub Actions secrets."
