@@ -39,6 +39,55 @@ header p {
   line-height: 1.7;
 }
 
+.account {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-top: 24px;
+  color: #5d665f;
+  font-size: 0.9rem;
+}
+
+.auth-panel {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(280px, 0.75fr);
+  gap: clamp(30px, 7vw, 90px);
+  align-items: center;
+  border: 1px solid #c9c8bc;
+  padding: clamp(28px, 5vw, 52px);
+  background: #fffdf8;
+  box-shadow: 0 24px 80px rgba(38, 51, 43, 0.1);
+}
+
+.auth-panel h2 {
+  max-width: 560px;
+  margin: 12px 0 18px;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: clamp(2rem, 4vw, 3.4rem);
+  font-weight: 500;
+  letter-spacing: -0.035em;
+  line-height: 1;
+}
+
+.auth-panel p {
+  color: #5d665f;
+  line-height: 1.6;
+}
+
+.auth-form {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 14px;
+  border: 0;
+  padding: 0;
+}
+
+.google-button.disabled {
+  pointer-events: none;
+  opacity: 0.6;
+}
+
 .workspace {
   display: grid;
   overflow: hidden;
@@ -66,16 +115,24 @@ label {
   font-weight: 800;
 }
 
+input,
 textarea {
   min-height: 150px;
   margin-bottom: 24px;
-  resize: vertical;
   border: 1px solid #c9c8bc;
   border-radius: 2px;
   background: #f8f6ef;
   color: #17211b;
   line-height: 1.55;
   padding: 14px;
+}
+
+input {
+  min-height: auto;
+}
+
+textarea {
+  resize: vertical;
 }
 
 button {
@@ -87,6 +144,18 @@ button {
   color: white;
   cursor: pointer;
   font-weight: 800;
+}
+
+.text-button {
+  border: 0;
+  padding: 0;
+  background: transparent;
+  color: #256044;
+  font-size: 0.85rem;
+}
+
+.auth-form .text-button {
+  margin-top: 18px;
 }
 
 button:disabled {
@@ -159,6 +228,52 @@ button:disabled {
   margin-top: 8px;
 }
 
+.history {
+  margin-top: 48px;
+  border-top: 1px solid #d9d7cc;
+  padding-top: 36px;
+}
+
+.history h2 {
+  margin: 12px 0 24px;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: clamp(1.6rem, 3vw, 2.2rem);
+  font-weight: 500;
+}
+
+.history ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 12px;
+}
+
+.history button {
+  width: 100%;
+  align-self: stretch;
+  display: grid;
+  gap: 6px;
+  border: 1px solid #c9c8bc;
+  border-radius: 2px;
+  padding: 16px 18px;
+  background: #fffdf8;
+  color: #17211b;
+  text-align: left;
+  cursor: pointer;
+}
+
+.history button strong {
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.history button span {
+  color: #5d665f;
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
 @media (max-width: 780px) {
   main {
     width: min(100% - 24px, 620px);
@@ -166,6 +281,10 @@ button:disabled {
   }
 
   .workspace {
+    grid-template-columns: 1fr;
+  }
+
+  .auth-panel {
     grid-template-columns: 1fr;
   }
 

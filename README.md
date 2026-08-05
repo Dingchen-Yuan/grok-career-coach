@@ -10,48 +10,59 @@ AI-assisted career coaching API and web app for job seekers.
 
 ## Overview
 
-Users sign in, submit a job description and résumé highlights, and receive structured coaching output (fit analysis, interview questions, improvement suggestions) powered by **xAI Grok**. The API is secured with **JWT** and deployed on **Azure**.
+Users sign in with Google, submit a job description and résumé highlights, and
+receive structured coaching output (fit analysis, interview questions,
+improvement suggestions). Analysis uses **xAI Grok** when `GROK_API_KEY` is set;
+otherwise a deterministic **mock coach** keeps local demos working. Responses are
+cached briefly in **Redis**. PostgreSQL stores users and coaching sessions. Azure
+deployment remains on the roadmap.
 
-## Planned / target stack
+## Current stack
 
-| Layer | Technology |
-|--------|------------|
-| API | ASP.NET Core (C#) |
-| Auth | JWT (access + refresh) |
-| Data | PostgreSQL + EF Core |
-| Cache / rate limit | Redis |
-| AI | xAI Grok (server-side only) |
-| Containers | Docker Compose |
-| Docs | OpenAPI / Swagger |
-| Tests | xUnit + mocked Grok client |
-| Cloud | Azure App Service / Container Apps + Key Vault |
-| Frontend | React + TypeScript (minimal UI) |
+| Layer | Technology | Status |
+|--------|------------|--------|
+| API | ASP.NET Core (C#) | Working |
+| Auth | Google Identity Services + JWT (access + refresh) | Working |
+| Data | PostgreSQL + EF Core | Working |
+| Cache | Redis (analyze response cache, 15 min) | Working |
+| AI | xAI Grok when keyed; otherwise MockGrokClient | Working |
+| Containers | Docker Compose (web + API + Postgres + Redis) | Working |
+| Docs | OpenAPI (Development) | Working |
+| Tests | xUnit + mocked Grok client | Working |
+| Cloud | Azure App Service / Container Apps + Key Vault | Planned |
+| Frontend | React + TypeScript | Working |
 
 ## Features (roadmap)
 
 - [x] Repository & architecture scaffold
-- [ ] User registration / login with JWT
-- [ ] Persist users & coaching sessions in PostgreSQL
-- [ ] Grok-backed “JD × résumé” analysis endpoint
-- [ ] Redis rate limiting / short-lived response cache
+- [x] Google sign-in with JWT access and refresh tokens
+- [x] Persist users & coaching sessions in PostgreSQL
+- [x] JD × résumé analysis endpoint (`POST /api/coaching/analyze`)
+- [x] Redis short-lived response cache for analyze
 - [x] Docker Compose for local web + API + Postgres + Redis
 - [x] OpenAPI + automated tests (Grok mocked)
+- [ ] Live Grok responses in production (requires API key + deploy)
 - [ ] Azure deploy with secrets in Key Vault
 
-## Architecture (target)
+## Architecture (current)
 
 ```text
-React UI ──JWT──▶ ASP.NET Core API ──▶ Grok (xAI)
+React UI ──JWT──▶ ASP.NET Core API ──▶ Grok (xAI) or Mock
                        │
                        ├── PostgreSQL
-                       ├── Redis
-                       └── Azure Key Vault (secrets)
+                       └── Redis (analyze cache)
 ```
 
 ## Local development
 
-The scaffold currently uses a mock Grok client, so no API key is needed to try the
-end-to-end flow.
+Without `GROK_API_KEY`, the API uses `MockGrokClient`, so no Grok key is required
+for the end-to-end flow. Authentication uses Google Identity Services and
+Google's official .NET token validator. The API issues short-lived access tokens,
+rotates refresh tokens, and stores only refresh-token hashes in PostgreSQL.
+
+Before starting, create a Google OAuth 2.0 Web client and add
+`http://localhost:5173` as an authorized JavaScript origin. Copy its client ID to
+`GOOGLE_CLIENT_ID` in `.env`.
 
 ```bash
 # Start the React UI, API, PostgreSQL, and Redis
@@ -59,15 +70,26 @@ cp .env.example .env
 docker compose up --build
 ```
 
+EF Core migrations are applied automatically when the API starts in the
+Development environment.
+
 Then open:
 
 - Web UI: http://localhost:5173
 - API health: http://localhost:5000/health
 - OpenAPI document: http://localhost:5000/openapi/v1.json
 
+Optional: set `GROK_API_KEY` in `.env` to call the real xAI Chat Completions API.
+
+If ports are already occupied, set `API_PORT` and `POSTGRES_PORT` in `.env`.
+
 To run the projects without Docker:
 
 ```bash
+dotnet tool restore
+dotnet ef database update --project src/GrokCareerCoach.Api
+
+# Redis should be available at localhost:6379
 ASPNETCORE_URLS=http://localhost:5000 \
   dotnet run --no-launch-profile --project src/GrokCareerCoach.Api
 
@@ -89,10 +111,11 @@ npm run lint
 ## Project structure
 
 ```text
-src/GrokCareerCoach.Api/       ASP.NET Core API and Grok client abstraction
+src/GrokCareerCoach.Api/          ASP.NET Core API, Grok client, Redis cache
 tests/GrokCareerCoach.Api.Tests/  xUnit tests
-web/                           React + TypeScript UI
-docker-compose.yml             Local application stack
+web/                              React + TypeScript UI
+docker-compose.yml                Local application stack
+.github/workflows/ci.yml          Build and test
 ```
 
 ## Environment variables
@@ -102,7 +125,9 @@ production JWT secrets.
 
 ## CV / résumé blurb
 
-> Building an ASP.NET Core career-coaching API with JWT, PostgreSQL, Redis, Docker, and xAI Grok, targeting deployment on Azure (App Service + Key Vault).
+> Building an ASP.NET Core career-coaching API with Google JWT auth, PostgreSQL,
+> Redis response caching, Docker Compose, and optional xAI Grok analysis
+> (mock fallback locally), targeting deployment on Azure.
 
 ## License
 

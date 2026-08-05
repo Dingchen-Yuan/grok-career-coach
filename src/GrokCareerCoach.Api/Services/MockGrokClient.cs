@@ -8,8 +8,17 @@ public sealed class MockGrokClient : IGrokClient
         CoachingRequest request,
         CancellationToken cancellationToken = default)
     {
+        var roleHint = request.JobDescription.Split(
+                ['\n', '.', '!'],
+                StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            .FirstOrDefault() ?? "the target role";
+        var highlightHint = request.ResumeHighlights.Split(
+                ['\n', '.', '!'],
+                StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            .FirstOrDefault() ?? "your highlighted experience";
+
         var response = new CoachingResponse(
-            "Your experience shows a promising baseline match. Connect each résumé claim to a measurable result before applying.",
+            $"Based on \"{Truncate(roleHint, 90)}\", your highlight \"{Truncate(highlightHint, 90)}\" shows a promising baseline match. Connect each résumé claim to a measurable result before applying.",
             [
                 "Relevant experience is visible in the submitted highlights.",
                 "The profile can be tailored directly to the role."
@@ -31,4 +40,7 @@ public sealed class MockGrokClient : IGrokClient
 
         return Task.FromResult(response);
     }
+
+    private static string Truncate(string value, int maxLength) =>
+        value.Length <= maxLength ? value : value[..(maxLength - 1)] + "…";
 }
