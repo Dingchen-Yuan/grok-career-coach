@@ -74,7 +74,7 @@ public sealed class GrokClient(
                 (int)response.StatusCode,
                 body);
             throw new InvalidOperationException(
-                $"Grok API request failed with status {(int)response.StatusCode}.");
+                "Grok API rejected the request. Check GROK_API_KEY at https://console.x.ai.");
         }
 
         var completion = JsonSerializer.Deserialize<GrokChatCompletion>(

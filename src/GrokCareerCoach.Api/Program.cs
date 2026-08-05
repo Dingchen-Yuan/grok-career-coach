@@ -1,4 +1,5 @@
 using System.Text;
+using Azure.Identity;
 using GrokCareerCoach.Api.Data;
 using GrokCareerCoach.Api.Options;
 using GrokCareerCoach.Api.Services;
@@ -7,6 +8,15 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 
 var builder = WebApplication.CreateBuilder(args);
+
+var keyVaultUri = builder.Configuration["KeyVault:Uri"]
+    ?? Environment.GetEnvironmentVariable("KEY_VAULT_URI");
+if (!string.IsNullOrWhiteSpace(keyVaultUri))
+{
+    builder.Configuration.AddAzureKeyVault(
+        new Uri(keyVaultUri),
+        new DefaultAzureCredential());
+}
 
 var postgresConnection = builder.Configuration.GetConnectionString("Postgres")
     ?? throw new InvalidOperationException(
@@ -82,9 +92,21 @@ builder.Services.AddCors(options =>
 {
     options.AddDefaultPolicy(policy =>
     {
-        var origins = builder.Configuration
-            .GetSection("Cors:AllowedOrigins")
-            .Get<string[]>() ?? ["http://localhost:5173"];
+        var csv = builder.Configuration["Cors:AllowedOriginsCsv"];
+        string[] origins;
+        if (!string.IsNullOrWhiteSpace(csv))
+        {
+            origins = csv.Split(
+                ',',
+                StringSplitOptions.RemoveEmptyEntries
+                    | StringSplitOptions.TrimEntries);
+        }
+        else
+        {
+            origins = builder.Configuration
+                .GetSection("Cors:AllowedOrigins")
+                .Get<string[]>() ?? ["http://localhost:5173"];
+        }
 
         policy.WithOrigins(origins)
             .AllowAnyHeader()
@@ -94,11 +116,14 @@ builder.Services.AddCors(options =>
 
 var app = builder.Build();
 
-if (app.Environment.IsDevelopment())
+await using (var scope = app.Services.CreateAsyncScope())
 {
-    await using var scope = app.Services.CreateAsyncScope();
     var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
     await dbContext.Database.MigrateAsync();
+}
+
+if (app.Environment.IsDevelopment())
+{
     app.MapOpenApi();
 }
 

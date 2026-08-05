@@ -15,7 +15,7 @@ receive structured coaching output (fit analysis, interview questions,
 improvement suggestions). Analysis uses **xAI Grok** when `GROK_API_KEY` is set;
 otherwise a deterministic **mock coach** keeps local demos working. Responses are
 cached briefly in **Redis**. PostgreSQL stores users and coaching sessions. Azure
-deployment remains on the roadmap.
+Container Apps + Key Vault deployment scripts live under `deploy/azure/`.
 
 ## Current stack
 
@@ -29,7 +29,7 @@ deployment remains on the roadmap.
 | Containers | Docker Compose (web + API + Postgres + Redis) | Working |
 | Docs | OpenAPI (Development) | Working |
 | Tests | xUnit + mocked Grok client | Working |
-| Cloud | Azure App Service / Container Apps + Key Vault | Planned |
+| Cloud | Azure Container Apps + Key Vault | Scripts ready |
 | Frontend | React + TypeScript | Working |
 
 ## Features (roadmap)
@@ -41,8 +41,8 @@ deployment remains on the roadmap.
 - [x] Redis short-lived response cache for analyze
 - [x] Docker Compose for local web + API + Postgres + Redis
 - [x] OpenAPI + automated tests (Grok mocked)
-- [ ] Live Grok responses in production (requires API key + deploy)
-- [ ] Azure deploy with secrets in Key Vault
+- [x] Azure deploy scripts (Container Apps + Postgres + Redis + Key Vault)
+- [x] Public production URL (New Zealand North Container Apps)
 
 ## Architecture (current)
 
@@ -70,8 +70,7 @@ cp .env.example .env
 docker compose up --build
 ```
 
-EF Core migrations are applied automatically when the API starts in the
-Development environment.
+EF Core migrations are applied automatically when the API starts.
 
 Then open:
 
@@ -108,12 +107,27 @@ npm run build
 npm run lint
 ```
 
+## Azure deployment
+
+See **[deploy/azure/README.md](deploy/azure/README.md)**.
+
+```bash
+az login
+./deploy/azure/deploy.sh
+```
+
+After deploy, add the printed web URL as a Google OAuth **Authorized JavaScript
+origin**. Secrets (`GOOGLE_CLIENT_ID`, `JWT_SECRET`, `GROK_API_KEY`, DB/Redis
+connection strings) are stored in Key Vault; the API reads them with a managed
+identity when `KEY_VAULT_URI` is set.
+
 ## Project structure
 
 ```text
 src/GrokCareerCoach.Api/          ASP.NET Core API, Grok client, Redis cache
 tests/GrokCareerCoach.Api.Tests/  xUnit tests
 web/                              React + TypeScript UI
+deploy/azure/                     Azure Container Apps deploy script + docs
 docker-compose.yml                Local application stack
 .github/workflows/ci.yml          Build and test
 ```
@@ -126,8 +140,8 @@ production JWT secrets.
 ## CV / résumé blurb
 
 > Building an ASP.NET Core career-coaching API with Google JWT auth, PostgreSQL,
-> Redis response caching, Docker Compose, and optional xAI Grok analysis
-> (mock fallback locally), targeting deployment on Azure.
+> Redis response caching, Docker Compose, optional xAI Grok analysis, and Azure
+> Container Apps + Key Vault deployment.
 
 ## License
 

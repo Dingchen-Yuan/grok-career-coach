@@ -54,7 +54,20 @@ public sealed class CoachingController(
         }
         else
         {
-            response = await grokClient.AnalyzeAsync(request, cancellationToken);
+            try
+            {
+                response = await grokClient.AnalyzeAsync(
+                    request,
+                    cancellationToken);
+            }
+            catch (InvalidOperationException ex)
+            {
+                return Problem(
+                    detail: ex.Message,
+                    statusCode: StatusCodes.Status502BadGateway,
+                    title: "Coaching analysis failed");
+            }
+
             await cache.SetStringAsync(
                 cacheKey,
                 JsonSerializer.Serialize(response, JsonOptions),
