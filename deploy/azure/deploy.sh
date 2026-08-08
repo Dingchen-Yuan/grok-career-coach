@@ -171,14 +171,17 @@ az containerapp env create \
   --logs-workspace-key "$LAW_KEY" \
   --output none 2>/dev/null || true
 
-echo "==> Building and pushing images"
+IMAGE_TAG="${IMAGE_TAG:-$(date +%Y%m%d%H%M%S)}"
+echo "==> Building and pushing images (tag: $IMAGE_TAG)"
 echo "$ACR_PASS" | docker login "$ACR_LOGIN_SERVER" -u "$ACR_USER" --password-stdin
 
 docker build \
   --platform linux/amd64 \
   -f src/GrokCareerCoach.Api/Dockerfile \
+  -t "$ACR_LOGIN_SERVER/api:$IMAGE_TAG" \
   -t "$ACR_LOGIN_SERVER/api:latest" \
   .
+docker push "$ACR_LOGIN_SERVER/api:$IMAGE_TAG"
 docker push "$ACR_LOGIN_SERVER/api:latest"
 
 # API URL is deterministic once the app exists; create API first without CORS web URL,
@@ -203,7 +206,7 @@ deploy_or_update_api() {
     az containerapp update \
       --name "$API_APP" \
       --resource-group "$RG" \
-      --image "$ACR_LOGIN_SERVER/api:latest" \
+      --image "$ACR_LOGIN_SERVER/api:$IMAGE_TAG" \
       --set-env-vars "${env_vars[@]}" \
       --output none
   else
@@ -211,7 +214,7 @@ deploy_or_update_api() {
       --name "$API_APP" \
       --resource-group "$RG" \
       --environment "$ENV_NAME" \
-      --image "$ACR_LOGIN_SERVER/api:latest" \
+      --image "$ACR_LOGIN_SERVER/api:$IMAGE_TAG" \
       --registry-server "$ACR_LOGIN_SERVER" \
       --registry-username "$ACR_USER" \
       --registry-password "$ACR_PASS" \
@@ -261,8 +264,10 @@ docker build \
   -f web/Dockerfile \
   --build-arg "VITE_API_BASE_URL=$API_URL" \
   --build-arg "VITE_GOOGLE_CLIENT_ID=$GOOGLE_CLIENT_ID" \
+  -t "$ACR_LOGIN_SERVER/web:$IMAGE_TAG" \
   -t "$ACR_LOGIN_SERVER/web:latest" \
   .
+docker push "$ACR_LOGIN_SERVER/web:$IMAGE_TAG"
 docker push "$ACR_LOGIN_SERVER/web:latest"
 
 echo "==> Creating / updating Web Container App"
@@ -270,14 +275,14 @@ if az containerapp show --name "$WEB_APP" --resource-group "$RG" >/dev/null 2>&1
   az containerapp update \
     --name "$WEB_APP" \
     --resource-group "$RG" \
-    --image "$ACR_LOGIN_SERVER/web:latest" \
+    --image "$ACR_LOGIN_SERVER/web:$IMAGE_TAG" \
     --output none
 else
   az containerapp create \
     --name "$WEB_APP" \
     --resource-group "$RG" \
     --environment "$ENV_NAME" \
-    --image "$ACR_LOGIN_SERVER/web:latest" \
+    --image "$ACR_LOGIN_SERVER/web:$IMAGE_TAG" \
     --registry-server "$ACR_LOGIN_SERVER" \
     --registry-username "$ACR_USER" \
     --registry-password "$ACR_PASS" \

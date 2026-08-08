@@ -7,6 +7,7 @@ import {
   signOut,
 } from './api/client'
 import type { CoachingResponse, CoachingSession, User } from './api/client'
+import { downloadCoachingPdf } from './lib/exportCoachingPdf'
 import './App.css'
 
 function App() {
@@ -139,7 +140,20 @@ function App() {
           <article className="results" aria-live="polite">
             {result ? (
               <>
-                <span className="eyebrow">Coaching brief</span>
+                <div className="results-header">
+                  <span className="eyebrow">Coaching brief</span>
+                  <button
+                    className="secondary-button"
+                    onClick={() => {
+                      void downloadCoachingPdf(result, {
+                        jobSnippet: jobDescription,
+                      })
+                    }}
+                    type="button"
+                  >
+                    Download PDF
+                  </button>
+                </div>
                 <h2>{result.fitSummary}</h2>
                 <ResultList title="Strengths" items={result.strengths} />
                 <ResultList title="Gaps to address" items={result.gaps} />
@@ -157,7 +171,8 @@ function App() {
                 <span>01</span>
                 <h2>Your coaching brief will appear here.</h2>
                 <p>
-                  The current API uses a mock Grok client for local development.
+                  Paste a job description and résumé highlights, then download
+                  the brief as a PDF when you are ready.
                 </p>
               </div>
             )}
@@ -173,7 +188,11 @@ function App() {
             {sessions.map((session) => (
               <li key={session.id}>
                 <button
-                  onClick={() => setResult(session.result)}
+                  onClick={() => {
+                    setResult(session.result)
+                    setJobDescription(session.jobDescription)
+                    setResumeHighlights(session.resumeHighlights)
+                  }}
                   type="button"
                 >
                   <strong>{session.result.fitSummary}</strong>
