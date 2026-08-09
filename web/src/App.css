@@ -173,8 +173,31 @@ button:disabled {
   color: #e9eee9;
 }
 
+.results-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
 .results .eyebrow {
   color: #9ed0b8;
+}
+
+.secondary-button {
+  border: 1px solid #9ed0b8;
+  border-radius: 999px;
+  padding: 10px 18px;
+  background: transparent;
+  color: #9ed0b8;
+  cursor: pointer;
+  font-weight: 800;
+  font-size: 0.8rem;
+}
+
+.secondary-button:hover {
+  background: rgba(158, 208, 184, 0.12);
 }
 
 .results h2 {
