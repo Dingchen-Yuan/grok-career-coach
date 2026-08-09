@@ -117,6 +117,34 @@ public sealed class CoachingController(
         return Ok(response);
     }
 
+    [HttpDelete("sessions/{id:guid}")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> DeleteSession(
+        Guid id,
+        CancellationToken cancellationToken)
+    {
+        if (!TryGetUserId(out var userId))
+        {
+            return Unauthorized();
+        }
+
+        var session = await dbContext.CoachingSessions
+            .FirstOrDefaultAsync(
+                item => item.Id == id && item.UserId == userId,
+                cancellationToken);
+
+        if (session is null)
+        {
+            return NotFound();
+        }
+
+        dbContext.CoachingSessions.Remove(session);
+        await dbContext.SaveChangesAsync(cancellationToken);
+        return NoContent();
+    }
+
     private bool TryGetUserId(out Guid userId)
     {
         var raw =

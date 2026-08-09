@@ -2,6 +2,7 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using GrokCareerCoach.Api.Controllers;
 using GrokCareerCoach.Api.Data;
+using GrokCareerCoach.Api.Data.Entities;
 using GrokCareerCoach.Api.Models;
 using GrokCareerCoach.Api.Services;
 using Microsoft.AspNetCore.Http;
@@ -98,6 +99,65 @@ public sealed class CoachingControllerTests
 
         Assert.Equal(1, grok.CallCount);
         Assert.Equal(2, await dbContext.CoachingSessions.CountAsync());
+    }
+
+    [Fact]
+    public async Task DeleteSession_RemovesOwnSession()
+    {
+        await using var dbContext = CreateDbContext();
+        var userId = Guid.NewGuid();
+        var session = new CoachingSession
+        {
+            UserId = userId,
+            JobDescription = Request.JobDescription,
+            ResumeHighlights = Request.ResumeHighlights,
+            ResponseJson = """{"fitSummary":"ok","strengths":[],"gaps":[],"interviewQuestions":[],"improvementSuggestions":[]}"""
+        };
+        dbContext.CoachingSessions.Add(session);
+        await dbContext.SaveChangesAsync();
+
+        var identity = new ClaimsIdentity(
+            [new Claim("sub", userId.ToString())],
+            "test");
+        var controller = CreateController(
+            dbContext,
+            new ClaimsPrincipal(identity));
+
+        var result = await controller.DeleteSession(session.Id, default);
+
+        Assert.IsType<NoContentResult>(result);
+        Assert.Empty(dbContext.CoachingSessions);
+    }
+
+    [Fact]
+    public async Task DeleteSession_WhenMissingOrOtherUser_ReturnsNotFound()
+    {
+        await using var dbContext = CreateDbContext();
+        var ownerId = Guid.NewGuid();
+        var otherId = Guid.NewGuid();
+        var session = new CoachingSession
+        {
+            UserId = ownerId,
+            JobDescription = Request.JobDescription,
+            ResumeHighlights = Request.ResumeHighlights,
+            ResponseJson = """{"fitSummary":"ok","strengths":[],"gaps":[],"interviewQuestions":[],"improvementSuggestions":[]}"""
+        };
+        dbContext.CoachingSessions.Add(session);
+        await dbContext.SaveChangesAsync();
+
+        var identity = new ClaimsIdentity(
+            [new Claim("sub", otherId.ToString())],
+            "test");
+        var controller = CreateController(
+            dbContext,
+            new ClaimsPrincipal(identity));
+
+        var otherUserResult = await controller.DeleteSession(session.Id, default);
+        var missingResult = await controller.DeleteSession(Guid.NewGuid(), default);
+
+        Assert.IsType<NotFoundResult>(otherUserResult);
+        Assert.IsType<NotFoundResult>(missingResult);
+        Assert.Single(dbContext.CoachingSessions);
     }
 
     private static CoachingController CreateController(

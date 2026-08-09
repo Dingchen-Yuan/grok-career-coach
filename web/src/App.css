@@ -272,7 +272,14 @@ button:disabled {
   gap: 12px;
 }
 
-.history button {
+.history-item {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: stretch;
+}
+
+.history-open {
   width: 100%;
   align-self: stretch;
   display: grid;
@@ -286,15 +293,40 @@ button:disabled {
   cursor: pointer;
 }
 
-.history button strong {
+.history-open strong {
   font-weight: 600;
   line-height: 1.4;
 }
 
-.history button span {
+.history-open span {
   color: #5d665f;
   font-size: 0.85rem;
   font-weight: 500;
+}
+
+.history-delete {
+  align-self: stretch;
+  border: 1px solid #c9c8bc;
+  border-radius: 2px;
+  padding: 0 16px;
+  background: transparent;
+  color: #a3342f;
+  cursor: pointer;
+  font-weight: 700;
+  font-size: 0.8rem;
+}
+
+.history-delete:hover:not(:disabled) {
+  background: rgba(163, 52, 47, 0.08);
+}
+
+.history-delete:disabled {
+  cursor: wait;
+  opacity: 0.65;
+}
+
+.history > .error {
+  margin: 0 0 16px;
 }
 
 @media (max-width: 780px) {
