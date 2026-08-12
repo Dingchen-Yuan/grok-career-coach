@@ -3,6 +3,7 @@ import type { FormEvent } from 'react'
 import {
   analyzeCareerFit,
   authenticateWithGoogle,
+  deleteCoachingSession,
   listCoachingSessions,
   signOut,
 } from './api/client'
@@ -17,9 +18,12 @@ function App() {
   const [jobDescription, setJobDescription] = useState('')
   const [resumeHighlights, setResumeHighlights] = useState('')
   const [result, setResult] = useState<CoachingResponse | null>(null)
+  const [selectedSessionId, setSelectedSessionId] = useState<string | null>(null)
   const [sessions, setSessions] = useState<CoachingSession[]>([])
   const [error, setError] = useState('')
   const [isLoading, setIsLoading] = useState(false)
+  const [historyError, setHistoryError] = useState('')
+  const [deletingSessionId, setDeletingSessionId] = useState<string | null>(null)
 
   async function loadSessions() {
     setSessions(await listCoachingSessions())
@@ -47,7 +51,9 @@ function App() {
     signOut()
     setUser(null)
     setResult(null)
+    setSelectedSessionId(null)
     setSessions([])
+    setHistoryError('')
   }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -57,6 +63,7 @@ function App() {
 
     try {
       setResult(await analyzeCareerFit({ jobDescription, resumeHighlights }))
+      setSelectedSessionId(null)
       await loadSessions()
     } catch (requestError) {
       setError(
@@ -66,6 +73,28 @@ function App() {
       )
     } finally {
       setIsLoading(false)
+    }
+  }
+
+  async function handleDeleteSession(sessionId: string) {
+    setHistoryError('')
+    setDeletingSessionId(sessionId)
+
+    try {
+      await deleteCoachingSession(sessionId)
+      if (selectedSessionId === sessionId) {
+        setResult(null)
+        setSelectedSessionId(null)
+      }
+      await loadSessions()
+    } catch (requestError) {
+      setHistoryError(
+        requestError instanceof Error
+          ? requestError.message
+          : 'Unable to delete this coaching session.',
+      )
+    } finally {
+      setDeletingSessionId(null)
     }
   }
 
@@ -184,22 +213,37 @@ function App() {
         <section className="history">
           <span className="eyebrow">Saved sessions</span>
           <h2>Your recent coaching history</h2>
+          {historyError && <p className="error">{historyError}</p>}
           <ul>
             {sessions.map((session) => (
               <li key={session.id}>
-                <button
-                  onClick={() => {
-                    setResult(session.result)
-                    setJobDescription(session.jobDescription)
-                    setResumeHighlights(session.resumeHighlights)
-                  }}
-                  type="button"
-                >
-                  <strong>{session.result.fitSummary}</strong>
-                  <span>
-                    {new Date(session.createdAt).toLocaleString()}
-                  </span>
-                </button>
+                <div className="history-item">
+                  <button
+                    className="history-open"
+                    onClick={() => {
+                      setResult(session.result)
+                      setSelectedSessionId(session.id)
+                      setJobDescription(session.jobDescription)
+                      setResumeHighlights(session.resumeHighlights)
+                    }}
+                    type="button"
+                  >
+                    <strong>{session.result.fitSummary}</strong>
+                    <span>
+                      {new Date(session.createdAt).toLocaleString()}
+                    </span>
+                  </button>
+                  <button
+                    className="history-delete"
+                    disabled={deletingSessionId === session.id}
+                    onClick={() => {
+                      void handleDeleteSession(session.id)
+                    }}
+                    type="button"
+                  >
+                    {deletingSessionId === session.id ? 'Deleting…' : 'Delete'}
+                  </button>
+                </div>
               </li>
             ))}
           </ul>

@@ -99,6 +99,22 @@ export async function listCoachingSessions(): Promise<CoachingSession[]> {
   return response.json() as Promise<CoachingSession[]>
 }
 
+export async function deleteCoachingSession(id: string): Promise<void> {
+  const response = await authorizedFetch(`/api/coaching/sessions/${id}`, {
+    method: 'DELETE',
+  })
+
+  if (!response.ok) {
+    throw new Error(
+      response.status === 401
+        ? 'Your session expired. Sign in again.'
+        : response.status === 404
+          ? 'That coaching session was not found.'
+          : 'Unable to delete this coaching session.',
+    )
+  }
+}
+
 async function authorizedFetch(path: string, init: RequestInit) {
   let response = await fetch(`${apiBaseUrl}${path}`, {
     ...init,
