@@ -15,8 +15,8 @@ AI-assisted career coaching app for job seekers — **live demo** on Azure.
 2. Paste a **job description** and **résumé highlights**
 3. Get a structured coaching brief (fit summary, strengths, gaps, interview
    questions, improvements)
-4. **Download the brief as a PDF**
-5. Revisit past sessions from **saved history**
+4. **Download the brief as a PDF** or **copy it to the clipboard**
+5. Revisit past sessions from **saved history** (and delete ones you no longer need)
 
 Analysis uses **xAI Grok** when `GROK_API_KEY` is set; otherwise a deterministic
 **mock coach** keeps local demos working. Analyze responses are cached briefly in
@@ -43,6 +43,7 @@ Analysis uses **xAI Grok** when `GROK_API_KEY` is set; otherwise a deterministic
 │  React web (Vite)  │ ───────────────────▶ │  ASP.NET Core API        │
 │  Google GIS button │                      │  Auth + Coaching APIs    │
 │  PDF download      │ ◀─────────────────── │                          │
+│  Copy brief        │                      │                          │
 └────────────────────┘     coaching JSON    └────────────┬─────────────┘
                                                          │
                      ┌───────────────────────────────────┼────────────────┐
@@ -67,6 +68,8 @@ Production (Azure Container Apps · New Zealand North)
 - [x] JD × résumé analysis (`POST /api/coaching/analyze`)
 - [x] Redis short-lived response cache
 - [x] Download coaching brief as PDF (browser-side)
+- [x] Copy coaching brief to the clipboard
+- [x] Delete saved coaching sessions
 - [x] Docker Compose for local full stack
 - [x] OpenAPI (Development) + xUnit tests (Grok mocked)
 - [x] Azure deploy scripts (Container Apps + Postgres + Redis + Key Vault)
