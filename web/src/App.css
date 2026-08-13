@@ -181,6 +181,12 @@ button:disabled {
   gap: 12px;
 }
 
+.results-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
 .results .eyebrow {
   color: #9ed0b8;
 }

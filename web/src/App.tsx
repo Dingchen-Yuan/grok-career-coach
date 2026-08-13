@@ -9,6 +9,7 @@ import {
 } from './api/client'
 import type { CoachingResponse, CoachingSession, User } from './api/client'
 import { downloadCoachingPdf } from './lib/exportCoachingPdf'
+import { copyCoachingBrief } from './lib/copyCoachingBrief'
 import './App.css'
 
 function App() {
@@ -24,6 +25,9 @@ function App() {
   const [isLoading, setIsLoading] = useState(false)
   const [historyError, setHistoryError] = useState('')
   const [deletingSessionId, setDeletingSessionId] = useState<string | null>(null)
+  const [copyStatus, setCopyStatus] = useState<'idle' | 'copied' | 'error'>(
+    'idle',
+  )
 
   async function loadSessions() {
     setSessions(await listCoachingSessions())
@@ -171,17 +175,46 @@ function App() {
               <>
                 <div className="results-header">
                   <span className="eyebrow">Coaching brief</span>
-                  <button
-                    className="secondary-button"
-                    onClick={() => {
-                      void downloadCoachingPdf(result, {
-                        jobSnippet: jobDescription,
-                      })
-                    }}
-                    type="button"
-                  >
-                    Download PDF
-                  </button>
+                  <div className="results-actions">
+                    <button
+                      className="secondary-button"
+                      onClick={() => {
+                        void copyCoachingBrief(result)
+                          .then(() => {
+                            setCopyStatus('copied')
+                            window.setTimeout(
+                              () => setCopyStatus('idle'),
+                              2000,
+                            )
+                          })
+                          .catch(() => {
+                            setCopyStatus('error')
+                            window.setTimeout(
+                              () => setCopyStatus('idle'),
+                              2500,
+                            )
+                          })
+                      }}
+                      type="button"
+                    >
+                      {copyStatus === 'copied'
+                        ? 'Copied'
+                        : copyStatus === 'error'
+                          ? 'Copy failed'
+                          : 'Copy brief'}
+                    </button>
+                    <button
+                      className="secondary-button"
+                      onClick={() => {
+                        void downloadCoachingPdf(result, {
+                          jobSnippet: jobDescription,
+                        })
+                      }}
+                      type="button"
+                    >
+                      Download PDF
+                    </button>
+                  </div>
                 </div>
                 <h2>{result.fitSummary}</h2>
                 <ResultList title="Strengths" items={result.strengths} />
