@@ -16,7 +16,7 @@ AI-assisted career coaching app for job seekers — **live demo** on Azure.
 3. Get a structured coaching brief (fit summary, strengths, gaps, interview
    questions, improvements)
 4. **Download the brief as a PDF** or **copy it to the clipboard**
-5. Revisit past sessions from **saved history** (and delete ones you no longer need)
+5. Revisit past sessions from **saved history**, search them, and delete ones you no longer need
 
 Analysis uses **xAI Grok** when `GROK_API_KEY` is set; otherwise a deterministic
 **mock coach** keeps local demos working. Analyze responses are cached briefly in
@@ -70,6 +70,7 @@ Production (Azure Container Apps · New Zealand North)
 - [x] Download coaching brief as PDF (browser-side)
 - [x] Copy coaching brief to the clipboard
 - [x] Delete saved coaching sessions
+- [x] Search saved coaching history
 - [x] Docker Compose for local full stack
 - [x] OpenAPI (Development) + xUnit tests (Grok mocked)
 - [x] Azure deploy scripts (Container Apps + Postgres + Redis + Key Vault)
