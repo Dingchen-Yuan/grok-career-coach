@@ -264,10 +264,28 @@ button:disabled {
 }
 
 .history h2 {
-  margin: 12px 0 24px;
+  margin: 12px 0 18px;
   font-family: Georgia, "Times New Roman", serif;
   font-size: clamp(1.6rem, 3vw, 2.2rem);
   font-weight: 500;
+}
+
+.history-search-label {
+  display: block;
+  margin: 0 0 8px;
+  font-size: 0.85rem;
+  font-weight: 800;
+}
+
+.history-search {
+  width: min(100%, 520px);
+  min-height: auto;
+  margin-bottom: 20px;
+}
+
+.history-empty {
+  margin: 0 0 8px;
+  color: #5d665f;
 }
 
 .history ul {

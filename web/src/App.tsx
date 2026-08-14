@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import type { FormEvent } from 'react'
 import {
   analyzeCareerFit,
@@ -28,6 +28,7 @@ function App() {
   const [copyStatus, setCopyStatus] = useState<'idle' | 'copied' | 'error'>(
     'idle',
   )
+  const [historyQuery, setHistoryQuery] = useState('')
 
   async function loadSessions() {
     setSessions(await listCoachingSessions())
@@ -58,6 +59,7 @@ function App() {
     setSelectedSessionId(null)
     setSessions([])
     setHistoryError('')
+    setHistoryQuery('')
   }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -101,6 +103,24 @@ function App() {
       setDeletingSessionId(null)
     }
   }
+
+  const visibleSessions = useMemo(() => {
+    const query = historyQuery.trim().toLowerCase()
+    if (!query) {
+      return sessions
+    }
+
+    return sessions.filter((session) => {
+      const haystack = [
+        session.result.fitSummary,
+        session.jobDescription,
+        session.resumeHighlights,
+      ]
+        .join(' ')
+        .toLowerCase()
+      return haystack.includes(query)
+    })
+  }, [historyQuery, sessions])
 
   return (
     <main>
@@ -246,40 +266,57 @@ function App() {
         <section className="history">
           <span className="eyebrow">Saved sessions</span>
           <h2>Your recent coaching history</h2>
+          <label className="history-search-label" htmlFor="history-search">
+            Search history
+          </label>
+          <input
+            className="history-search"
+            id="history-search"
+            onChange={(event) => setHistoryQuery(event.target.value)}
+            placeholder="Filter by summary, job description, or résumé notes…"
+            type="search"
+            value={historyQuery}
+          />
           {historyError && <p className="error">{historyError}</p>}
-          <ul>
-            {sessions.map((session) => (
-              <li key={session.id}>
-                <div className="history-item">
-                  <button
-                    className="history-open"
-                    onClick={() => {
-                      setResult(session.result)
-                      setSelectedSessionId(session.id)
-                      setJobDescription(session.jobDescription)
-                      setResumeHighlights(session.resumeHighlights)
-                    }}
-                    type="button"
-                  >
-                    <strong>{session.result.fitSummary}</strong>
-                    <span>
-                      {new Date(session.createdAt).toLocaleString()}
-                    </span>
-                  </button>
-                  <button
-                    className="history-delete"
-                    disabled={deletingSessionId === session.id}
-                    onClick={() => {
-                      void handleDeleteSession(session.id)
-                    }}
-                    type="button"
-                  >
-                    {deletingSessionId === session.id ? 'Deleting…' : 'Delete'}
-                  </button>
-                </div>
-              </li>
-            ))}
-          </ul>
+          {visibleSessions.length === 0 ? (
+            <p className="history-empty">
+              No saved sessions match “{historyQuery.trim()}”.
+            </p>
+          ) : (
+            <ul>
+              {visibleSessions.map((session) => (
+                <li key={session.id}>
+                  <div className="history-item">
+                    <button
+                      className="history-open"
+                      onClick={() => {
+                        setResult(session.result)
+                        setSelectedSessionId(session.id)
+                        setJobDescription(session.jobDescription)
+                        setResumeHighlights(session.resumeHighlights)
+                      }}
+                      type="button"
+                    >
+                      <strong>{session.result.fitSummary}</strong>
+                      <span>
+                        {new Date(session.createdAt).toLocaleString()}
+                      </span>
+                    </button>
+                    <button
+                      className="history-delete"
+                      disabled={deletingSessionId === session.id}
+                      onClick={() => {
+                        void handleDeleteSession(session.id)
+                      }}
+                      type="button"
+                    >
+                      {deletingSessionId === session.id ? 'Deleting…' : 'Delete'}
+                    </button>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
         </section>
       )}
     </main>
