@@ -133,6 +133,13 @@ input {
 
 textarea {
   resize: vertical;
+  margin-bottom: 8px;
+}
+
+.field-meta {
+  margin: 0 0 20px;
+  color: #5d665f;
+  font-size: 0.8rem;
 }
 
 button {

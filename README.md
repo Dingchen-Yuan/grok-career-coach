@@ -12,7 +12,7 @@ AI-assisted career coaching app for job seekers — **live demo** on Azure.
 ## What it does
 
 1. Sign in with **Google**
-2. Paste a **job description** and **résumé highlights**
+2. Paste a **job description** and **résumé highlights** (drafts stay in the tab if you refresh)
 3. Get a structured coaching brief (fit summary, strengths, gaps, interview
    questions, improvements)
 4. **Download the brief as a PDF** or **copy it to the clipboard**
@@ -71,6 +71,7 @@ Production (Azure Container Apps · New Zealand North)
 - [x] Copy coaching brief to the clipboard
 - [x] Delete saved coaching sessions
 - [x] Search saved coaching history
+- [x] Persist JD/résumé drafts in the browser tab
 - [x] Docker Compose for local full stack
 - [x] OpenAPI (Development) + xUnit tests (Grok mocked)
 - [x] Azure deploy scripts (Container Apps + Postgres + Redis + Key Vault)
