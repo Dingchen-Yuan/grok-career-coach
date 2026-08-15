@@ -10,14 +10,19 @@ import {
 import type { CoachingResponse, CoachingSession, User } from './api/client'
 import { downloadCoachingPdf } from './lib/exportCoachingPdf'
 import { copyCoachingBrief } from './lib/copyCoachingBrief'
+import { loadCoachingDraft, saveCoachingDraft } from './lib/coachingDraft'
 import './App.css'
 
 function App() {
   const [user, setUser] = useState<User | null>(null)
   const [authError, setAuthError] = useState('')
   const [isAuthenticating, setIsAuthenticating] = useState(false)
-  const [jobDescription, setJobDescription] = useState('')
-  const [resumeHighlights, setResumeHighlights] = useState('')
+  const [jobDescription, setJobDescription] = useState(
+    () => loadCoachingDraft().jobDescription,
+  )
+  const [resumeHighlights, setResumeHighlights] = useState(
+    () => loadCoachingDraft().resumeHighlights,
+  )
   const [result, setResult] = useState<CoachingResponse | null>(null)
   const [selectedSessionId, setSelectedSessionId] = useState<string | null>(null)
   const [sessions, setSessions] = useState<CoachingSession[]>([])
@@ -104,6 +109,10 @@ function App() {
     }
   }
 
+  useEffect(() => {
+    saveCoachingDraft({ jobDescription, resumeHighlights })
+  }, [jobDescription, resumeHighlights])
+
   const visibleSessions = useMemo(() => {
     const query = historyQuery.trim().toLowerCase()
     if (!query) {
@@ -173,6 +182,10 @@ function App() {
             required
             value={jobDescription}
           />
+          <p className="field-meta">
+            {jobDescription.trim().length}/30 characters
+            {jobDescription.trim().length < 30 ? ' needed' : ' ready'}
+          </p>
 
           <label htmlFor="resume-highlights">Résumé highlights</label>
           <textarea
@@ -183,6 +196,10 @@ function App() {
             required
             value={resumeHighlights}
           />
+          <p className="field-meta">
+            {resumeHighlights.trim().length}/20 characters
+            {resumeHighlights.trim().length < 20 ? ' needed' : ' ready'}
+          </p>
 
           <button disabled={isLoading} type="submit">
             {isLoading ? 'Analyzing…' : 'Analyze my fit'}
