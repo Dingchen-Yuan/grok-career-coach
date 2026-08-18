@@ -87,7 +87,15 @@ function App() {
     }
   }
 
-  async function handleDeleteSession(sessionId: string) {
+  async function handleDeleteSession(sessionId: string, summary: string) {
+    if (
+      !window.confirm(
+        `Delete this coaching session?\n\n${summary}\n\nThis cannot be undone.`,
+      )
+    ) {
+      return
+    }
+
     setHistoryError('')
     setDeletingSessionId(sessionId)
 
@@ -323,7 +331,10 @@ function App() {
                       className="history-delete"
                       disabled={deletingSessionId === session.id}
                       onClick={() => {
-                        void handleDeleteSession(session.id)
+                        void handleDeleteSession(
+                          session.id,
+                          session.result.fitSummary,
+                        )
                       }}
                       type="button"
                     >
